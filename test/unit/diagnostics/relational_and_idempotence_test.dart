@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:drift/native.dart';
 import 'package:drift/drift.dart' as drift;
-import 'package:cleaning_app/core/database/app_database.dart';
-import 'package:cleaning_app/core/services/sync_service.dart';
-import 'package:cleaning_app/core/services/connectivity_service.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/task_item.dart';
+import 'package:spatio_cleaning/core/database/app_database.dart';
+import 'package:spatio_cleaning/core/services/sync_service.dart';
+import 'package:spatio_cleaning/core/services/connectivity_service.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/task_item.dart';
 
 class _FakeOfflineConnectivity extends ConnectivityService {
   @override

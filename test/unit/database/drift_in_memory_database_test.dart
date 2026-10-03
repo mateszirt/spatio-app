@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
-import 'package:cleaning_app/core/database/app_database.dart';
+import 'package:spatio_cleaning/core/database/app_database.dart';
 
 void main() {
   late AppDatabase db;

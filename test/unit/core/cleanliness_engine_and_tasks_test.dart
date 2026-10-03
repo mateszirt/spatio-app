@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:cleaning_app/core/services/cleanliness_engine.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/furniture_item.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/room.dart';
-import 'package:cleaning_app/core/constants/app_strings.dart';
-import 'package:cleaning_app/features/cleaning_tasks/presentation/controllers/household_state_provider.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/task_item.dart';
+import 'package:spatio_cleaning/core/services/cleanliness_engine.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/furniture_item.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/room.dart';
+import 'package:spatio_cleaning/core/constants/app_strings.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/presentation/controllers/household_state_provider.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/task_item.dart';
 
 void main() {
   group('CleanlinessEngine & TaskItem tests', () {

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cleaning_app/features/cleaning_tasks/presentation/widgets/rewards_store_view.dart';
-import 'package:cleaning_app/features/cleaning_tasks/presentation/controllers/household_state_provider.dart';
-import 'package:cleaning_app/features/cleaning_tasks/presentation/controllers/rewards_controller.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/reward.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/presentation/widgets/rewards_store_view.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/presentation/controllers/household_state_provider.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/presentation/controllers/rewards_controller.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/reward.dart';
 
 class MockCurrentUserNotifier extends CurrentUserNotifier {
   final FamilyMember? _initial;

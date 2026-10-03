@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:cleaning_app/features/cleaning_tasks/presentation/floor_plan/pending_task_coin.dart';
-import 'package:cleaning_app/core/widgets/task_celebration_overlay.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/task_item.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/presentation/floor_plan/pending_task_coin.dart';
+import 'package:spatio_cleaning/core/widgets/task_celebration_overlay.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/task_item.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

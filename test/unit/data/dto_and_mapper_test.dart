@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:cleaning_app/features/cleaning_tasks/data/models/task_item_dto.dart';
-import 'package:cleaning_app/features/cleaning_tasks/data/models/room_dto.dart';
-import 'package:cleaning_app/features/cleaning_tasks/data/models/furniture_item_dto.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/task_item.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/room.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/furniture_item.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/data/models/task_item_dto.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/data/models/room_dto.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/data/models/furniture_item_dto.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/task_item.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/room.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/furniture_item.dart';
 
 void main() {
   group('DTO & Data Mapper Unit Tests', () {

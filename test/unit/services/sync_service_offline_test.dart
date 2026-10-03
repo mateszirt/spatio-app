@@ -2,12 +2,12 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:drift/native.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:cleaning_app/core/database/app_database.dart';
-import 'package:cleaning_app/core/services/sync_service.dart';
-import 'package:cleaning_app/core/services/connectivity_service.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/room.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/furniture_item.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/task_item.dart';
+import 'package:spatio_cleaning/core/database/app_database.dart';
+import 'package:spatio_cleaning/core/services/sync_service.dart';
+import 'package:spatio_cleaning/core/services/connectivity_service.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/room.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/furniture_item.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/task_item.dart';
 
 /// Test ConnectivityService simulating offline mode
 class OfflineConnectivityService extends ConnectivityService {

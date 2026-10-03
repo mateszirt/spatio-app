@@ -117,3 +117,7 @@ service_account.json
 
 supabase/schema.sql
 TASKS.txt
+
+# Agent configurations & skill locks
+.agents/
+skills-lock.json

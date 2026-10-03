@@ -1,11 +1,11 @@
 {
-    "name": "cleaning_app",
-    "short_name": "cleaning_app",
+    "name": "Spatio - Floor Plan & Chores",
+    "short_name": "Spatio",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Smart 2D interactive floor plan and household chore management app.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

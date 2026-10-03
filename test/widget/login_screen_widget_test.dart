@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cleaning_app/core/constants/app_strings.dart';
-import 'package:cleaning_app/features/cleaning_tasks/presentation/screens/login_screen.dart';
+import 'package:spatio_cleaning/core/constants/app_strings.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/presentation/screens/login_screen.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

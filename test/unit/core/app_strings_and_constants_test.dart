@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:cleaning_app/core/constants/app_constants.dart';
-import 'package:cleaning_app/core/constants/app_strings.dart';
-import 'package:cleaning_app/core/errors/exceptions.dart';
-import 'package:cleaning_app/core/utils/id_generator.dart';
+import 'package:spatio_cleaning/core/constants/app_constants.dart';
+import 'package:spatio_cleaning/core/constants/app_strings.dart';
+import 'package:spatio_cleaning/core/errors/exceptions.dart';
+import 'package:spatio_cleaning/core/utils/id_generator.dart';
 
 void main() {
   group('AppStrings, AppConstants, Exceptions and IdGenerator Tests', () {

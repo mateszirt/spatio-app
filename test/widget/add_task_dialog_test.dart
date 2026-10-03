@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cleaning_app/features/cleaning_tasks/presentation/widgets/add_task_dialog.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/room.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/furniture_item.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/task_item.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/presentation/widgets/add_task_dialog.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/room.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/furniture_item.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/task_item.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

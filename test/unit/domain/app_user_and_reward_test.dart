@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/app_user.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/reward.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/user_effort_snapshot.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/app_user.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/reward.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/user_effort_snapshot.dart';
 
 void main() {
   group('AppUser, UserRole, Reward and UserEffortSnapshot Tests', () {

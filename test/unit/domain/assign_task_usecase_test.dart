@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/app_user.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/task_item.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/user_effort_snapshot.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/usecases/assign_task_usecase.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/app_user.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/task_item.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/user_effort_snapshot.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/usecases/assign_task_usecase.dart';
 
 void main() {
   group('AssignTaskUseCase Exhaustive & Fault Tolerance Tests', () {

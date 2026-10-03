@@ -1,8 +1,8 @@
 import 'dart:ui';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:cleaning_app/features/cleaning_tasks/presentation/floor_plan/geometry_utils.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/room.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/furniture_item.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/presentation/floor_plan/geometry_utils.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/room.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/furniture_item.dart';
 
 void main() {
   group('FloorPlan & Geometry Tests', () {

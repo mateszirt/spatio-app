@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:cleaning_app/features/cleaning_tasks/presentation/floor_plan/geometry_utils.dart';
-import 'package:cleaning_app/core/services/cleanliness_engine.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/room.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/task_item.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/user_effort_snapshot.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/app_user.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/usecases/assign_task_usecase.dart';
-import 'package:cleaning_app/features/cleaning_tasks/presentation/floor_plan/furniture_catalog.dart';
-import 'package:cleaning_app/features/cleaning_tasks/data/models/task_item_dto.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/presentation/floor_plan/geometry_utils.dart';
+import 'package:spatio_cleaning/core/services/cleanliness_engine.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/room.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/task_item.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/user_effort_snapshot.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/app_user.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/usecases/assign_task_usecase.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/presentation/floor_plan/furniture_catalog.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/data/models/task_item_dto.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

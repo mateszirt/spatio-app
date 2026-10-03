@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cleaning_app/main.dart';
-import 'package:cleaning_app/core/services/connectivity_service.dart';
-import 'package:cleaning_app/core/services/sync_service.dart';
-import 'package:cleaning_app/features/cleaning_tasks/presentation/controllers/supabase_sync_controller.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/room.dart';
-import 'package:cleaning_app/features/cleaning_tasks/domain/models/task_item.dart';
+import 'package:spatio_cleaning/main.dart';
+import 'package:spatio_cleaning/core/services/connectivity_service.dart';
+import 'package:spatio_cleaning/core/services/sync_service.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/presentation/controllers/supabase_sync_controller.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/room.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/domain/models/task_item.dart';
 
-import 'package:cleaning_app/core/services/auth_service.dart';
-import 'package:cleaning_app/features/cleaning_tasks/presentation/controllers/household_state_provider.dart';
-import 'package:cleaning_app/features/cleaning_tasks/presentation/controllers/task_assignment_controller.dart';
+import 'package:spatio_cleaning/core/services/auth_service.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/presentation/controllers/household_state_provider.dart';
+import 'package:spatio_cleaning/features/cleaning_tasks/presentation/controllers/task_assignment_controller.dart';
 
 class FakeAuthNotifier extends AuthNotifier {
   @override

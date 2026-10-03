@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:cleaning_app/core/services/gamification.dart';
-import 'package:cleaning_app/core/services/presence_service.dart';
+import 'package:spatio_cleaning/core/services/gamification.dart';
+import 'package:spatio_cleaning/core/services/presence_service.dart';
 
 void main() {
   group('Gamification Service Tests', () {

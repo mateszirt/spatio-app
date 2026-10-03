@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:drift/native.dart';
-import 'package:cleaning_app/core/database/app_database.dart';
+import 'package:spatio_cleaning/core/database/app_database.dart';
 
 // 1. Domain Entities & Business Rules
 import 'unit/domain/task_item_test.dart' as task_item_test;
