@@ -1,0 +1,42 @@
+# Auto-detect text files and normalize line endings to LF
+* text=auto eol=lf
+
+# Dart & Flutter source files
+*.dart text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.sql text eol=lf
+
+# Web source files
+*.html text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+
+# Android configuration
+*.gradle text eol=lf
+*.gradle.kts text eol=lf
+*.properties text eol=lf
+*.xml text eol=lf
+*.kt text eol=lf
+*.java text eol=lf
+
+# iOS configuration
+*.swift text eol=lf
+*.storyboard text eol=lf
+*.plist text eol=lf
+*.xcconfig text eol=lf
+*.pbxproj text eol=lf
+
+# Binary files - preserve exact bytes without conversion
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.wasm binary
+*.jar binary
+*.so binary
+*.aar binary

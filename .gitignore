@@ -1,0 +1,119 @@
+# --------------------------------------------------
+# Flutter & Dart core
+# --------------------------------------------------
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+coverage/
+**/doc/api/
+.widget_preview/
+
+# Symbolication & Obfuscation artifacts
+app.*.symbols
+app.*.map.json
+
+# --------------------------------------------------
+# Android specific
+# --------------------------------------------------
+android/.gradle/
+android/captures/
+android/gradle/
+android/local.properties
+android/key.properties
+android/**/build/
+android/app/build/
+android/app/debug
+android/app/profile
+android/app/release
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# --------------------------------------------------
+# iOS specific
+# --------------------------------------------------
+ios/.symlinks/
+ios/Pods/
+ios/Podfile.lock
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/App.framework
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/.last_build_id
+**/ios/**/GeneratedPluginRegistrant.*
+**/ios/**/*.mode1v3
+**/ios/**/*.mode2v3
+**/ios/**/*.moved-aside
+**/ios/**/*.pbxuser
+**/ios/**/*.perspectivev3
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# --------------------------------------------------
+# Web & Desktop build artifacts
+# --------------------------------------------------
+web/build/
+*.class
+*.log
+*.pyc
+*.swp
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# --------------------------------------------------
+# IDEs & Editors
+# --------------------------------------------------
+# IntelliJ / Android Studio
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Visual Studio Code
+.vscode/
+
+# --------------------------------------------------
+# Operating System files
+# --------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# --------------------------------------------------
+# Sensitive & Secret Files (Credentials, Keys, Configs)
+# --------------------------------------------------
+*.env
+*.env.*
+*.key
+*.keystore
+*.jks
+*.p12
+*.pem
+*.p8
+*.mobileprovision
+google-services.json
+GoogleService-Info.plist
+secrets.json
+service_account.json
+
+# Extras
+
+supabase/schema.sql
+TASKS.txt
