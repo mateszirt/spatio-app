@@ -12,6 +12,7 @@ import '../../domain/models/task_item.dart';
 import '../controllers/household_state_provider.dart';
 import '../controllers/supabase_sync_controller.dart';
 import '../widgets/add_task_dialog.dart';
+import '../widgets/pending_sync_sheet.dart';
 import 'floor_plan_screen.dart';
 import 'household_screen.dart';
 import 'account_screen.dart';
@@ -95,6 +96,7 @@ class _CleaningDashboardScreenState extends ConsumerState<CleaningDashboardScree
     return Scaffold(
       appBar: AppBar(
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(6),
@@ -106,20 +108,27 @@ class _CleaningDashboardScreenState extends ConsumerState<CleaningDashboardScree
                   color: theme.colorScheme.primary, size: 22),
             ),
             const SizedBox(width: 10),
-            const Text(
-              AppStrings.appName,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            const Flexible(
+              child: Text(
+                AppStrings.appName,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
             ),
           ],
         ),
         actions: [
-          // Pending Sync Badge
+          // Pending Sync Badge (tap to see exactly what is waiting)
           if (pendingCount > 0)
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
               child: Tooltip(
                 message: '$pendingCount ${AppStrings.pendingSyncTooltip}',
-                child: Container(
+                child: InkWell(
+                  key: const ValueKey('pending_sync_badge'),
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () => PendingSyncSheet.show(context),
+                  child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                   decoration: BoxDecoration(
                     color: Colors.amber.shade100,
@@ -140,6 +149,7 @@ class _CleaningDashboardScreenState extends ConsumerState<CleaningDashboardScree
                         ),
                       ),
                     ],
+                  ),
                   ),
                 ),
               ),
@@ -203,6 +213,7 @@ class _CleaningDashboardScreenState extends ConsumerState<CleaningDashboardScree
         ],
         bottom: TabBar(
           controller: _tabController,
+          labelPadding: const EdgeInsets.symmetric(horizontal: 4),
           labelColor: theme.colorScheme.primary,
           unselectedLabelColor: Colors.grey.shade600,
           indicatorColor: theme.colorScheme.primary,
@@ -227,22 +238,25 @@ class _CleaningDashboardScreenState extends ConsumerState<CleaningDashboardScree
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        physics: _tabController.index == 0 ? const NeverScrollableScrollPhysics() : null,
-        children: [
-          // 1. FLOOR PLAN
-          FloorPlanScreen(key: _floorPlanKey, isEmbedded: true),
+      body: SafeArea(
+        top: false,
+        child: TabBarView(
+          controller: _tabController,
+          physics: _tabController.index == 0 ? const NeverScrollableScrollPhysics() : null,
+          children: [
+            // 1. FLOOR PLAN
+            FloorPlanScreen(key: _floorPlanKey, isEmbedded: true),
 
-          // 2. TASKS
-          _buildTasksTab(context, tasksAsync, rooms, furnitureList),
+            // 2. TASKS
+            _buildTasksTab(context, tasksAsync, rooms, furnitureList),
 
-          // 3. ROOMS & HIERARCHICAL VIEW
-          _buildRoomsTab(context, roomsAsync, tasks, furnitureList),
+            // 3. ROOMS & HIERARCHICAL VIEW
+            _buildRoomsTab(context, roomsAsync, tasks, furnitureList),
 
-          // 4. HOUSEHOLD
-          const HouseholdScreen(),
-        ],
+            // 4. HOUSEHOLD
+            const HouseholdScreen(),
+          ],
+        ),
       ),
       floatingActionButton: _tabController.index == 0 || _tabController.index == 3
           ? null
@@ -583,16 +597,23 @@ class _CleaningDashboardScreenState extends ConsumerState<CleaningDashboardScree
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Text(_furnitureEmoji(furniture.category ?? furniture.name)),
-                  const SizedBox(width: 6),
-                  Text(
-                    furniture.name,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                ],
+              Expanded(
+                child: Row(
+                  children: [
+                    Text(_furnitureEmoji(furniture.category ?? furniture.name)),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        furniture.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 6),
               InkWell(
                 onTap: () {
                   final rooms = ref.read(roomsRealtimeStreamProvider).value ?? [];

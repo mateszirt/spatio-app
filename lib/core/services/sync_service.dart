@@ -23,6 +23,13 @@ class SyncService {
   String? _subscribedHouseholdId;
   void Function(String householdId)? onUserChanged;
   bool _isSyncing = false;
+  Timer? _retryTimer;
+
+  /// Placeholder household id used by earlier builds before real households existed.
+  static const String legacyHouseholdId = '00000000-0000-0000-0000-000000000001';
+
+  /// Last push error per sync-queue entry id (shown in the pending sync list).
+  final Map<int, String> lastSyncErrors = {};
 
   SyncService({
     required this.db,
@@ -47,6 +54,7 @@ class SyncService {
 
   void dispose() {
     _connectivitySub?.cancel();
+    _retryTimer?.cancel();
     unsubscribeRealtime();
   }
 
@@ -62,6 +70,15 @@ class SyncService {
     if (client == null) return;
 
     _subscribedHouseholdId = householdId;
+
+    // Retry anything still queued every 20s (connectivity events alone are not enough on mobile data)
+    _retryTimer?.cancel();
+    _retryTimer = Timer.periodic(const Duration(seconds: 20), (_) async {
+      final queued = await db.select(db.syncQueueTable).get();
+      if (queued.isNotEmpty) {
+        await syncAll(householdId: _subscribedHouseholdId);
+      }
+    });
     final channel = client.channel('realtime:hh:$householdId');
 
     // 1. Listen for Room changes
@@ -203,6 +220,8 @@ class SyncService {
   }
 
   void unsubscribeRealtime() {
+    _retryTimer?.cancel();
+    _retryTimer = null;
     if (_realtimeChannel != null) {
       supabase?.removeChannel(_realtimeChannel!);
       _realtimeChannel = null;
@@ -221,7 +240,7 @@ class SyncService {
     _isSyncing = true;
     try {
       // Step 1: Upload local offline changes to the server (PUSH)
-      await _pushPendingChanges();
+      await _pushPendingChanges(householdId: householdId);
 
       // Step 2: Download remote changes into local database (PULL)
       await _pullRemoteChanges(householdId: householdId ?? _subscribedHouseholdId);
@@ -235,9 +254,12 @@ class SyncService {
   // ===========================================================================
   // 2. PUSH: UPLOAD LOCAL OFFLINE MUTATIONS TO SUPABASE
   // ===========================================================================
-  Future<void> _pushPendingChanges() async {
+  Future<void> _pushPendingChanges({String? householdId}) async {
     final client = supabase;
     if (client == null) return;
+
+    final effectiveHhId = householdId ?? _subscribedHouseholdId;
+    await _repairLegacyHouseholdIds(effectiveHhId);
 
     // Fetch queued changes in FIFO order
     final queueEntries = await (db.select(db.syncQueueTable)
@@ -246,56 +268,88 @@ class SyncService {
 
     for (final item in queueEntries) {
       try {
-        if (item.targetTable == 'Task') {
-          if (item.operation == 'DELETE') {
-            await client.from('Task').delete().eq('id', item.recordId);
-          } else {
-            final jsonMap = jsonDecode(item.payload) as Map<String, dynamic>;
-            final hhId = jsonMap['household_id'];
-            if (hhId != null) {
-              await client.from('Household').upsert({
-                'id': hhId,
-                'name': 'Family Home',
-              });
-            }
-            await client.from('Task').upsert(jsonMap);
-            // Clear pending flag on successful push
-            await (db.update(db.tasksTable)..where((t) => t.id.equals(item.recordId)))
-                .write(const TasksTableCompanion(isPendingSync: Value(false)));
-          }
-        } else if (item.targetTable == 'Room') {
-          if (item.operation == 'DELETE') {
-            await client.from('Room').delete().eq('id', item.recordId);
-          } else {
-            final jsonMap = jsonDecode(item.payload) as Map<String, dynamic>;
-            final hhId = jsonMap['household_id'];
-            if (hhId != null) {
-              await client.from('Household').upsert({
-                'id': hhId,
-                'name': 'Family Home',
-              });
-            }
-            await client.from('Room').upsert(jsonMap);
-            await (db.update(db.roomsTable)..where((t) => t.id.equals(item.recordId)))
-                .write(const RoomsTableCompanion(isPendingSync: Value(false)));
-          }
-        } else if (item.targetTable == 'Furniture_Item') {
-          if (item.operation == 'DELETE') {
-            await client.from('Furniture_Item').delete().eq('id', item.recordId);
-          } else {
-            final jsonMap = jsonDecode(item.payload) as Map<String, dynamic>;
-            await client.from('Furniture_Item').upsert(jsonMap);
-            await (db.update(db.furnitureItemsTable)..where((t) => t.id.equals(item.recordId)))
-                .write(const FurnitureItemsTableCompanion(isPendingSync: Value(false)));
-          }
-        }
-
+        await _pushQueueItem(client, item);
+        lastSyncErrors.remove(item.id);
         // Remove processed item from sync queue
         await (db.delete(db.syncQueueTable)..where((t) => t.id.equals(item.id))).go();
-      } catch (_) {
-        // Stop queue processing on error; retry during next sync cycle
-        break;
+      } catch (e) {
+        // Keep the item for the next cycle, but do NOT let it block the rest of the queue
+        lastSyncErrors[item.id] = e.toString();
       }
+    }
+  }
+
+  Future<void> _pushQueueItem(SupabaseClient client, SyncQueueTableData item) async {
+    final table = item.targetTable;
+    if (table != 'Task' && table != 'Room' && table != 'Furniture_Item') return;
+
+    if (item.operation == 'DELETE') {
+      await client.from(table).delete().eq('id', item.recordId);
+      return;
+    }
+
+    final jsonMap = Map<String, dynamic>.from(jsonDecode(item.payload) as Map);
+
+    if (item.operation == 'UPDATE') {
+      // Partial payloads must never go through upsert (would violate NOT NULL columns)
+      final changes = Map<String, dynamic>.from(jsonMap)..remove('id');
+      await client.from(table).update(changes).eq('id', item.recordId);
+      return;
+    }
+
+    if (table != 'Furniture_Item') {
+      final hhId = jsonMap['household_id'];
+      if (hhId != null) {
+        // Only create a placeholder household if it does not exist yet (never overwrite a real name)
+        final existing = await client.from('Household').select('id').eq('id', hhId).maybeSingle();
+        if (existing == null) {
+          try {
+            await client.from('Household').insert({'id': hhId, 'name': 'Family Home'});
+          } catch (_) {
+            // Row may exist but be invisible to us; the real upsert below decides
+          }
+        }
+      }
+    }
+    await client.from(table).upsert(jsonMap);
+
+    switch (table) {
+      case 'Task':
+        await (db.update(db.tasksTable)..where((t) => t.id.equals(item.recordId)))
+            .write(const TasksTableCompanion(isPendingSync: Value(false)));
+        break;
+      case 'Room':
+        await (db.update(db.roomsTable)..where((t) => t.id.equals(item.recordId)))
+            .write(const RoomsTableCompanion(isPendingSync: Value(false)));
+        break;
+      case 'Furniture_Item':
+        await (db.update(db.furnitureItemsTable)..where((t) => t.id.equals(item.recordId)))
+            .write(const FurnitureItemsTableCompanion(isPendingSync: Value(false)));
+        break;
+    }
+  }
+
+  /// Earlier builds saved rooms/tasks under a placeholder household, so they were hidden from the
+  /// real household's view. Move them (and their queued payloads) to the real household.
+  Future<void> _repairLegacyHouseholdIds(String? householdId) async {
+    if (householdId == null || householdId.isEmpty || householdId == legacyHouseholdId) return;
+
+    await (db.update(db.roomsTable)..where((t) => t.householdId.equals(legacyHouseholdId)))
+        .write(RoomsTableCompanion(householdId: Value(householdId)));
+    await (db.update(db.tasksTable)..where((t) => t.householdId.equals(legacyHouseholdId)))
+        .write(TasksTableCompanion(householdId: Value(householdId)));
+
+    final queued = await db.select(db.syncQueueTable).get();
+    for (final item in queued) {
+      if (!item.payload.contains(legacyHouseholdId)) continue;
+      try {
+        final map = jsonDecode(item.payload) as Map<String, dynamic>;
+        if (map['household_id'] == legacyHouseholdId) {
+          map['household_id'] = householdId;
+          await (db.update(db.syncQueueTable)..where((t) => t.id.equals(item.id)))
+              .write(SyncQueueTableCompanion(payload: Value(jsonEncode(map))));
+        }
+      } catch (_) {}
     }
   }
 
@@ -449,6 +503,8 @@ class SyncService {
     }
 
     // 3. Fallback to offline sync queue
+    await (db.update(db.roomsTable)..where((t) => t.id.equals(room.id)))
+        .write(const RoomsTableCompanion(isPendingSync: Value(true)));
     await db.into(db.syncQueueTable).insert(
       SyncQueueTableCompanion(
         targetTable: const Value('Room'),
@@ -569,6 +625,8 @@ class SyncService {
       } catch (_) {}
     }
 
+    await (db.update(db.tasksTable)..where((t) => t.id.equals(task.id)))
+        .write(const TasksTableCompanion(isPendingSync: Value(true)));
     await db.into(db.syncQueueTable).insert(
       SyncQueueTableCompanion(
         targetTable: const Value('Task'),
@@ -852,6 +910,8 @@ class SyncService {
       } catch (_) {}
     }
 
+    await (db.update(db.furnitureItemsTable)..where((t) => t.id.equals(item.id)))
+        .write(const FurnitureItemsTableCompanion(isPendingSync: Value(true)));
     await db.into(db.syncQueueTable).insert(
       SyncQueueTableCompanion(
         targetTable: const Value('Furniture_Item'),
@@ -891,6 +951,13 @@ class SyncService {
   /// Count of pending items waiting to sync
   Stream<int> watchPendingSyncCount() {
     return db.select(db.syncQueueTable).watch().map((items) => items.length);
+  }
+
+  /// Full list of queued operations (oldest first) for the pending-sync list
+  Stream<List<SyncQueueTableData>> watchPendingSyncItems() {
+    return (db.select(db.syncQueueTable)
+          ..orderBy([(t) => OrderingTerm(expression: t.id, mode: OrderingMode.asc)]))
+        .watch();
   }
 }
 

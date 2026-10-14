@@ -9,6 +9,7 @@ class FamilyMember {
   final int points;
   final String avatar;
   final String email;
+  final String membershipStatus; // 'active', 'pending', 'rejected'
 
   const FamilyMember({
     required this.id,
@@ -17,10 +18,34 @@ class FamilyMember {
     this.points = 0,
     required this.avatar,
     required this.email,
+    this.membershipStatus = 'active',
   });
 
   bool get isParent => role == 'parent' || role == 'admin';
   bool get isChild => role == 'child';
+  bool get isPending => membershipStatus == 'pending';
+  bool get isActive => membershipStatus == 'active';
+  bool get isRejected => membershipStatus == 'rejected';
+
+  FamilyMember copyWith({
+    String? id,
+    String? name,
+    String? role,
+    int? points,
+    String? avatar,
+    String? email,
+    String? membershipStatus,
+  }) {
+    return FamilyMember(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      role: role ?? this.role,
+      points: points ?? this.points,
+      avatar: avatar ?? this.avatar,
+      email: email ?? this.email,
+      membershipStatus: membershipStatus ?? this.membershipStatus,
+    );
+  }
 }
 
 /// Household members notifier (Riverpod 3)
@@ -35,14 +60,7 @@ class HouseholdMembersNotifier extends Notifier<List<FamilyMember>> {
     state = [
       for (final m in state)
         if (m.id == memberIdOrName || m.name.toLowerCase() == memberIdOrName.toLowerCase())
-          FamilyMember(
-            id: m.id,
-            name: m.name,
-            role: m.role,
-            points: m.points + points,
-            avatar: m.avatar,
-            email: m.email,
-          )
+          m.copyWith(points: m.points + points)
         else
           m,
     ];
@@ -53,14 +71,7 @@ class HouseholdMembersNotifier extends Notifier<List<FamilyMember>> {
     state = [
       for (final m in state)
         if (m.id == memberIdOrName || m.name.toLowerCase() == memberIdOrName.toLowerCase())
-          FamilyMember(
-            id: m.id,
-            name: m.name,
-            role: m.role,
-            points: (m.points - points).clamp(0, 999999),
-            avatar: m.avatar,
-            email: m.email,
-          )
+          m.copyWith(points: (m.points - points).clamp(0, 999999))
         else
           m,
     ];
@@ -82,26 +93,12 @@ class CurrentUserNotifier extends Notifier<FamilyMember?> {
 
   void addPoints(int points) {
     if (state == null || points <= 0) return;
-    state = FamilyMember(
-      id: state!.id,
-      name: state!.name,
-      role: state!.role,
-      points: state!.points + points,
-      avatar: state!.avatar,
-      email: state!.email,
-    );
+    state = state!.copyWith(points: state!.points + points);
   }
 
   void deductPoints(int points) {
     if (state == null || points <= 0) return;
-    state = FamilyMember(
-      id: state!.id,
-      name: state!.name,
-      role: state!.role,
-      points: (state!.points - points).clamp(0, 999999),
-      avatar: state!.avatar,
-      email: state!.email,
-    );
+    state = state!.copyWith(points: (state!.points - points).clamp(0, 999999));
   }
 }
 

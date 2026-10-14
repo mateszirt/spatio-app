@@ -19,6 +19,7 @@ class AuthState {
   final String role; // 'parent' or 'child'
   final String name;
   final int pointsTotal;
+  final String membershipStatus; // 'active', 'pending', 'rejected'
 
   const AuthState({
     required this.isAuthenticated,
@@ -32,10 +33,13 @@ class AuthState {
     this.role = 'parent',
     this.name = '',
     this.pointsTotal = 0,
+    this.membershipStatus = 'active',
   });
 
   bool get isParent => role == 'parent' || role == 'admin';
   bool get isChild => role == 'child';
+  bool get isPendingApproval => membershipStatus == 'pending';
+  bool get isRejected => membershipStatus == 'rejected';
 
   AuthState copyWith({
     bool? isAuthenticated,
@@ -49,6 +53,7 @@ class AuthState {
     String? role,
     String? name,
     int? pointsTotal,
+    String? membershipStatus,
   }) {
     return AuthState(
       isAuthenticated: isAuthenticated ?? this.isAuthenticated,
@@ -62,6 +67,7 @@ class AuthState {
       role: role ?? this.role,
       name: name ?? this.name,
       pointsTotal: pointsTotal ?? this.pointsTotal,
+      membershipStatus: membershipStatus ?? this.membershipStatus,
     );
   }
 }
@@ -188,16 +194,24 @@ class AuthService {
       targetHouseholdId = newHhId;
       effectiveInviteCode = newCode;
     } else {
-      // Child or second parent joins via invite code
+      // Child or second parent joins via invite code (sends a join request)
       if (inviteCode == null || inviteCode.trim().isEmpty) {
         throw Exception('Please enter an invite code to join a household.');
       }
-      final code = inviteCode.trim().toUpperCase();
-      final existing = await client
+      final cleanCode = inviteCode.trim().toUpperCase();
+      var existing = await client
           .from('Household')
           .select('id, name, invite_code')
-          .eq('invite_code', code)
+          .eq('invite_code', cleanCode)
           .maybeSingle();
+
+      if (existing == null && !cleanCode.startsWith('SPATIO-')) {
+        existing = await client
+            .from('Household')
+            .select('id, name, invite_code')
+            .eq('invite_code', 'SPATIO-$cleanCode')
+            .maybeSingle();
+      }
 
       if (existing == null) {
         throw Exception('Invalid invite code. Please check with your household owner.');
@@ -208,6 +222,8 @@ class AuthService {
     }
 
     try {
+      final initialMembershipStatus = createNewHousehold ? 'active' : 'pending';
+
       final authRes = await client.auth.signUp(
         email: trimmedEmail,
         password: password,
@@ -229,7 +245,7 @@ class AuthService {
         throw Exception('This email address is already registered. Please sign in instead.');
       }
 
-      // Register in public User table
+      // Register in public User table with membership_status
       await client.from('User').upsert({
         'id': user.id,
         'household_id': targetHouseholdId,
@@ -237,6 +253,7 @@ class AuthService {
         'email': trimmedEmail,
         'role': role == 'child' ? 'child' : 'admin',
         'points_total': 0,
+        'membership_status': initialMembershipStatus,
         'created_at': DateTime.now().toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),
       });
@@ -253,6 +270,7 @@ class AuthService {
           householdId: targetHouseholdId,
           householdName: effectiveHouseholdName,
           inviteCode: effectiveInviteCode,
+          membershipStatus: initialMembershipStatus,
         );
       }
 
@@ -265,6 +283,7 @@ class AuthService {
         householdId: targetHouseholdId,
         householdName: effectiveHouseholdName,
         inviteCode: effectiveInviteCode,
+        membershipStatus: initialMembershipStatus,
       );
       _syncToHouseholdState(state);
       return state;
@@ -335,6 +354,7 @@ class AuthService {
             points: state.pointsTotal,
             avatar: state.isParent ? '👩‍💼' : '👦',
             email: state.email ?? '',
+            membershipStatus: state.membershipStatus,
           ),
         );
     if (state.householdId != null && state.householdId!.isNotEmpty) {
@@ -348,7 +368,7 @@ class AuthService {
     try {
       final userRow = await client
           .from('User')
-          .select('household_id, name, role, points_total')
+          .select('household_id, name, role, points_total, membership_status')
           .eq('id', state.userId!)
           .maybeSingle();
 
@@ -356,12 +376,14 @@ class AuthService {
       String name = state.name;
       String role = state.role;
       int points = state.pointsTotal;
+      String membershipStatus = state.membershipStatus;
 
       if (userRow != null) {
         hhId = userRow['household_id'] as String? ?? hhId;
         name = userRow['name'] as String? ?? name;
         role = (userRow['role'] as String? ?? 'admin') == 'child' ? 'child' : 'parent';
         points = (userRow['points_total'] as num?)?.toInt() ?? points;
+        membershipStatus = userRow['membership_status'] as String? ?? membershipStatus;
       }
 
       String? hhName = state.householdName;
@@ -385,6 +407,7 @@ class AuthService {
         name: name,
         role: role,
         pointsTotal: points,
+        membershipStatus: membershipStatus,
       );
     } catch (_) {
       return state;
@@ -402,7 +425,7 @@ class AuthService {
     try {
       final rows = await client
           .from('User')
-          .select('id, name, email, role, avatar_url, points_total')
+          .select('id, name, email, role, avatar_url, points_total, membership_status')
           .eq('household_id', householdId);
 
       final members = (rows as List).map((r) {
@@ -414,12 +437,13 @@ class AuthService {
           points: (r['points_total'] as num?)?.toInt() ?? 0,
           avatar: r['avatar_url'] as String? ?? (role == 'parent' ? '👩‍💼' : '👦'),
           email: r['email'] as String? ?? '',
+          membershipStatus: r['membership_status'] as String? ?? 'active',
         );
       }).toList();
 
       ref.read(householdMembersProvider.notifier).setMembers(members);
 
-      // If current user is in this list, sync their points to currentUserProvider
+      // If current user is in this list, sync their points & status to currentUserProvider
       final current = ref.read(currentUserProvider);
       if (current != null) {
         final me = members.cast<FamilyMember?>().firstWhere(
@@ -433,11 +457,34 @@ class AuthService {
     } catch (_) {}
   }
 
-  /// Generates a human-friendly unique invite code, e.g. "SPATIO-4892"
+  /// Approve a pending user join request for the household
+  Future<void> approveJoinRequest(String userId) async {
+    final client = supabase;
+    if (client == null) throw Exception('No connection available');
+    await client.from('User').update({
+      'membership_status': 'active',
+      'updated_at': DateTime.now().toIso8601String(),
+    }).eq('id', userId);
+  }
+
+  /// Reject/decline a pending user join request
+  Future<void> rejectJoinRequest(String userId) async {
+    final client = supabase;
+    if (client == null) throw Exception('No connection available');
+    await client.from('User').update({
+      'membership_status': 'rejected',
+      'updated_at': DateTime.now().toIso8601String(),
+    }).eq('id', userId);
+  }
+
+  /// Generates a human-friendly, collision-resistant invite code with over 1 trillion combinations.
+  /// Format: "SPATIO-XXXX-XXXX" using base-32 characters without visually ambiguous glyphs (0, O, 1, I).
   static String generateInviteCode() {
-    final random = Random();
-    final digits = 1000 + random.nextInt(9000);
-    return 'SPATIO-$digits';
+    const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    final random = Random.secure();
+    final p1 = List.generate(4, (_) => chars[random.nextInt(chars.length)]).join();
+    final p2 = List.generate(4, (_) => chars[random.nextInt(chars.length)]).join();
+    return 'SPATIO-$p1-$p2';
   }
 }
 
@@ -540,6 +587,45 @@ class AuthNotifier extends Notifier<AuthState> {
   Future<void> refreshHouseholdMembers() async {
     if (state.householdId != null && state.householdId!.isNotEmpty) {
       await _service.loadHouseholdMembers(state.householdId!);
+    }
+  }
+
+  /// Check if an admin approved the current user's join request
+  Future<void> checkApprovalStatus() async {
+    if (state.userId == null) return;
+    state = state.copyWith(isLoading: true);
+    try {
+      final updated = await _service._fetchProfileAndHousehold(state);
+      _service._syncToHouseholdState(updated);
+      state = updated;
+    } finally {
+      if (state.isLoading) state = state.copyWith(isLoading: false);
+    }
+  }
+
+  /// Approve a pending member request
+  Future<void> approveJoinRequest(String userId) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      await _service.approveJoinRequest(userId);
+      if (state.householdId != null) {
+        await _service.loadHouseholdMembers(state.householdId!);
+      }
+    } finally {
+      if (state.isLoading) state = state.copyWith(isLoading: false);
+    }
+  }
+
+  /// Decline/reject a pending member request
+  Future<void> rejectJoinRequest(String userId) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      await _service.rejectJoinRequest(userId);
+      if (state.householdId != null) {
+        await _service.loadHouseholdMembers(state.householdId!);
+      }
+    } finally {
+      if (state.isLoading) state = state.copyWith(isLoading: false);
     }
   }
 

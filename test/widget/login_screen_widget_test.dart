@@ -105,7 +105,7 @@ void main() {
     // Test Role selection switch
     await tester.tap(find.text(AppStrings.roleChild));
     await tester.pumpAndSettle();
-    expect(find.text("Enter Parent's Invite Code (e.g. SPATIO-1)"), findsOneWidget);
+    expect(find.text("Parent's Invite Code (e.g. SPATIO-7K9M-X4WP)"), findsOneWidget);
 
     // Unfocus before finishing test
     FocusManager.instance.primaryFocus?.unfocus();

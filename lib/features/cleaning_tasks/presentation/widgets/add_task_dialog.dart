@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/services/auth_service.dart';
 import '../../domain/models/furniture_item.dart';
 import '../../domain/models/room.dart';
 import '../../domain/models/task_item.dart';
@@ -49,7 +50,9 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
   final _notesController = TextEditingController();
 
   late TaskReferenceType _refType;
-  late String _targetId;
+  // Furniture can only be chosen from the room selected first.
+  String? _roomId;
+  String? _furnitureId;
   int _priority = 3;
   int _points = 10;
   bool _isRecurring = false;
@@ -68,16 +71,17 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
     } catch (_) {}
     _refType = widget.initialReferenceType;
 
-    if (widget.initialTargetId != null) {
-      _targetId = widget.initialTargetId!;
-    } else if (_refType == TaskReferenceType.room && widget.rooms.isNotEmpty) {
-      _targetId = widget.rooms.first.id;
-    } else if (_refType == TaskReferenceType.furnitureItem && widget.furnitureList.isNotEmpty) {
-      _targetId = widget.furnitureList.first.id;
-    } else if (widget.rooms.isNotEmpty) {
-      _targetId = widget.rooms.first.id;
-    } else {
-      _targetId = '00000000-0000-0000-0001-000000000001';
+    final target = widget.initialTargetId;
+    if (_refType == TaskReferenceType.furnitureItem && target != null) {
+      _furnitureId = target;
+      for (final f in widget.furnitureList) {
+        if (f.id == target) _roomId = f.roomId;
+      }
+    } else if (target != null) {
+      _roomId = target;
+    }
+    if (_roomId == null && widget.rooms.isNotEmpty) {
+      _roomId = widget.rooms.first.id;
     }
     _titleController.addListener(_onTitleChanged);
   }
@@ -88,7 +92,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
       _presenceNotifier?.trackActivity(
             action: 'typing_task',
             detail: 'Typing task "$title"',
-            roomId: _refType == TaskReferenceType.room ? _targetId : null,
+            roomId: _roomId,
           );
     }
   }
@@ -115,8 +119,17 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // Map rooms for easy name resolution
-    final roomMap = {for (final r in widget.rooms) r.id: r.name};
+    final rooms = widget.rooms;
+    final allFurniture = widget.furnitureList;
+
+    final effectiveRoomId = rooms.any((r) => r.id == _roomId)
+        ? _roomId
+        : (rooms.isNotEmpty ? rooms.first.id : null);
+    final roomFurniture = allFurniture.where((f) => f.roomId == effectiveRoomId).toList();
+    final effectiveFurnitureId = roomFurniture.any((f) => f.id == _furnitureId)
+        ? _furnitureId
+        : (roomFurniture.isNotEmpty ? roomFurniture.first.id : null);
+    final targetId = _refType == TaskReferenceType.room ? effectiveRoomId : effectiveFurnitureId;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -181,73 +194,75 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                     label: const Text(AppStrings.targetRoom),
                     selected: _refType == TaskReferenceType.room,
                     onSelected: (selected) {
-                      if (selected) {
-                        setState(() {
-                          _refType = TaskReferenceType.room;
-                          if (widget.rooms.isNotEmpty) {
-                            _targetId = widget.rooms.first.id;
-                          }
-                        });
-                      }
+                      if (selected) setState(() => _refType = TaskReferenceType.room);
                     },
                   ),
                   ChoiceChip(
                     label: const Text(AppStrings.targetFurniture),
                     selected: _refType == TaskReferenceType.furnitureItem,
                     onSelected: (selected) {
-                      if (selected) {
-                        setState(() {
-                          _refType = TaskReferenceType.furnitureItem;
-                          if (widget.furnitureList.isNotEmpty) {
-                            _targetId = widget.furnitureList.first.id;
-                          }
-                        });
-                      }
+                      if (selected) setState(() => _refType = TaskReferenceType.furnitureItem);
                     },
                   ),
                 ],
               ),
               const SizedBox(height: 14),
 
-              // Target Dropdown
-              if (_refType == TaskReferenceType.room)
-                DropdownButtonFormField<String>(
-                  initialValue: widget.rooms.any((r) => r.id == _targetId)
-                      ? _targetId
-                      : (widget.rooms.isNotEmpty ? widget.rooms.first.id : null),
-                  decoration: const InputDecoration(
-                    labelText: AppStrings.assignedRoom,
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.meeting_room_outlined),
-                  ),
-                  items: widget.rooms
-                      .map((r) => DropdownMenuItem(value: r.id, child: Text(r.name)))
-                      .toList(),
-                  onChanged: (val) {
-                    if (val != null) setState(() => _targetId = val);
-                  },
-                )
-              else
-                DropdownButtonFormField<String>(
-                  initialValue: widget.furnitureList.any((f) => f.id == _targetId)
-                      ? _targetId
-                      : (widget.furnitureList.isNotEmpty ? widget.furnitureList.first.id : null),
-                  decoration: const InputDecoration(
-                    labelText: AppStrings.assignedFurniture,
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.chair_outlined),
-                  ),
-                  items: widget.furnitureList.map((f) {
-                    final rName = roomMap[f.roomId] ?? 'Unassigned';
-                    return DropdownMenuItem(
-                      value: f.id,
-                      child: Text('${f.name} ($rName)'),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    if (val != null) setState(() => _targetId = val);
-                  },
+              // Room dropdown (always shown: furniture is chosen from within this room)
+              DropdownButtonFormField<String>(
+                key: ValueKey('room_dd_$effectiveRoomId'),
+                isExpanded: true,
+                initialValue: effectiveRoomId,
+                decoration: const InputDecoration(
+                  labelText: AppStrings.assignedRoom,
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.meeting_room_outlined),
                 ),
+                items: rooms
+                    .map((r) => DropdownMenuItem(
+                          value: r.id,
+                          child: Text(r.name, overflow: TextOverflow.ellipsis),
+                        ))
+                    .toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() {
+                      _roomId = val;
+                      _furnitureId = null;
+                    });
+                  }
+                },
+              ),
+
+              // Furniture dropdown (limited to the selected room's furniture)
+              if (_refType == TaskReferenceType.furnitureItem) ...[
+                const SizedBox(height: 14),
+                if (roomFurniture.isEmpty)
+                  Text(
+                    'This room has no furniture yet. Place furniture on the floor plan first.',
+                    style: TextStyle(fontSize: 12, color: Colors.orange.shade800),
+                  )
+                else
+                  DropdownButtonFormField<String>(
+                    key: ValueKey('furn_dd_${effectiveRoomId}_$effectiveFurnitureId'),
+                    isExpanded: true,
+                    initialValue: effectiveFurnitureId,
+                    decoration: const InputDecoration(
+                      labelText: AppStrings.assignedFurniture,
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.chair_outlined),
+                    ),
+                    items: roomFurniture
+                        .map((f) => DropdownMenuItem(
+                              value: f.id,
+                              child: Text(f.name, overflow: TextOverflow.ellipsis),
+                            ))
+                        .toList(),
+                    onChanged: (val) {
+                      if (val != null) setState(() => _furnitureId = val);
+                    },
+                  ),
+              ],
               const SizedBox(height: 16),
 
               // Priority Selector (1 - 5 scale)
@@ -435,27 +450,29 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                 ),
                 icon: const Icon(Icons.add_task_rounded),
                 label: const Text(AppStrings.createTask, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                onPressed: () {
-                  final title = _titleController.text.trim();
-                  if (title.isNotEmpty) {
-                    final dueDate = DateTime.now().add(Duration(minutes: _deadlineMinutes));
+                onPressed: targetId == null
+                    ? null
+                    : () async {
+                        final title = _titleController.text.trim();
+                        if (title.isEmpty) return;
+                        final dueDate = DateTime.now().add(Duration(minutes: _deadlineMinutes));
+                        final navigator = Navigator.of(context);
 
-                    ref.read(supabaseSyncControllerProvider.notifier).addTask(
-                          householdId: '00000000-0000-0000-0000-000000000001',
-                          title: title,
-                          referenceId: _targetId,
-                          referenceType: _refType,
-                          assignedTo: _assignedTo,
-                          pointsReward: _points,
-                          priority: _priority,
-                          dueDate: dueDate,
-                          isRecurring: _isRecurring,
-                          repeatIntervalMinutes: _isRecurring ? _deadlineMinutes : null,
-                          notes: _notesController.text.trim(),
-                        );
-                    Navigator.pop(context);
-                  }
-                },
+                        await ref.read(supabaseSyncControllerProvider.notifier).addTask(
+                              householdId: ref.read(authProvider).householdId ?? '',
+                              title: title,
+                              referenceId: targetId,
+                              referenceType: _refType,
+                              assignedTo: _assignedTo,
+                              pointsReward: _points,
+                              priority: _priority,
+                              dueDate: dueDate,
+                              isRecurring: _isRecurring,
+                              repeatIntervalMinutes: _isRecurring ? _deadlineMinutes : null,
+                              notes: _notesController.text.trim(),
+                            );
+                        if (navigator.mounted) navigator.pop();
+                      },
               ),
             ],
           ),

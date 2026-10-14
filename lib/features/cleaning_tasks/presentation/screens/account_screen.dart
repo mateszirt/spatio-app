@@ -95,7 +95,11 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
     );
 
     if (confirm == true) {
+      if (!mounted) return;
+      final navigator = Navigator.of(context);
       await ref.read(authProvider.notifier).signOut();
+      // The Account screen is a pushed route above the auth gate; remove it so the login screen is visible
+      navigator.popUntil((route) => route.isFirst);
     }
   }
 
@@ -131,8 +135,11 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
 
     if (confirm == true) {
       setState(() => _isDeletingAccount = true);
+      if (!mounted) return;
+      final navigator = Navigator.of(context);
       try {
         await ref.read(authProvider.notifier).deleteAccount();
+        navigator.popUntil((route) => route.isFirst);
         if (mounted) {
           showTopSnackBar(context, AppStrings.accountDeletedSuccess);
         }
@@ -167,7 +174,12 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
         centerTitle: false,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        padding: EdgeInsets.fromLTRB(
+          20,
+          24,
+          20,
+          24 + MediaQuery.of(context).padding.bottom,
+        ),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 680),

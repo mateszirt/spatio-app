@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/cleanliness_engine.dart';
 import '../../../../core/services/sync_service.dart';
 import '../../../../core/utils/id_generator.dart';
@@ -807,7 +808,7 @@ class FloorPlanScreenState extends ConsumerState<FloorPlanScreen> {
                     if (name.isNotEmpty) {
                       final newRoom = Room(
                         id: generateUuid(),
-                        householdId: '00000000-0000-0000-0000-000000000001',
+                        householdId: ref.read(authProvider).householdId ?? '',
                         name: name,
                         floor: floor,
                         cleanlinessScore: 100,
@@ -1516,6 +1517,7 @@ class FloorPlanScreenState extends ConsumerState<FloorPlanScreen> {
             top: 76,
             bottom: 80,
             right: 14,
+            left: MediaQuery.of(context).size.width < 420 ? 14 : null,
             child: _buildSideDetailsPanel(
               context,
               rooms,
@@ -1581,8 +1583,11 @@ class FloorPlanScreenState extends ConsumerState<FloorPlanScreen> {
               t.referenceId == furniture.id)
           .toList();
 
+      final screenWidth = MediaQuery.of(context).size.width;
+      final panelWidth = (screenWidth - 28.0).clamp(240.0, 360.0);
+
       return Container(
-        width: 360,
+        width: panelWidth,
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -1759,8 +1764,11 @@ class FloorPlanScreenState extends ConsumerState<FloorPlanScreen> {
       scoreColor = Colors.red;
     }
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final panelWidth = (screenWidth - 28.0).clamp(240.0, 360.0);
+
     return Container(
-      width: 360,
+      width: panelWidth,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,

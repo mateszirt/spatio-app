@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_strings.dart';
@@ -13,7 +14,7 @@ class LoginScreen extends ConsumerStatefulWidget {
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> with WidgetsBindingObserver {
   bool _isSignUp = false;
   bool _obscurePassword = true;
 
@@ -27,11 +28,58 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _createNewHousehold = true;
   bool _isLoading = false;
 
+  Timer? _confirmationPollTimer;
+  bool _isPollingConfirmation = false;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _emailController.addListener(_onFieldChanged);
     _passwordController.addListener(_onFieldChanged);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // User returns from the browser/mail app after tapping the confirmation link
+    if (state == AppLifecycleState.resumed &&
+        ref.read(authProvider).isAwaitingEmailConfirmation) {
+      _silentConfirmationCheck();
+    }
+  }
+
+  void _startConfirmationPolling() {
+    _confirmationPollTimer?.cancel();
+    _confirmationPollTimer = Timer.periodic(
+      const Duration(seconds: 4),
+      (_) => _silentConfirmationCheck(),
+    );
+  }
+
+  void _stopConfirmationPolling() {
+    _confirmationPollTimer?.cancel();
+    _confirmationPollTimer = null;
+  }
+
+  /// Quietly retries sign-in; succeeds as soon as the email link has been opened.
+  Future<void> _silentConfirmationCheck() async {
+    if (_isLoading || _isPollingConfirmation) return;
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    if (email.isEmpty || password.isEmpty) return;
+    _isPollingConfirmation = true;
+    try {
+      await ref.read(authProvider.notifier).signIn(email: email, password: password);
+      if (mounted && ref.read(authProvider).isAuthenticated) {
+        _stopConfirmationPolling();
+        showTopSnackBar(context, 'Email verified! Welcome to Spatio.');
+        widget.onLoginSuccess?.call();
+      }
+    } catch (_) {
+      // Still unconfirmed: keep waiting
+    } finally {
+      _isPollingConfirmation = false;
+    }
   }
 
   void _onFieldChanged() {
@@ -40,6 +88,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _confirmationPollTimer?.cancel();
     _emailController.removeListener(_onFieldChanged);
     _passwordController.removeListener(_onFieldChanged);
     _emailController.dispose();
@@ -213,6 +263,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
+    ref.listen<bool>(
+      authProvider.select((s) => s.isAwaitingEmailConfirmation),
+      (previous, awaiting) {
+        if (awaiting) {
+          _startConfirmationPolling();
+        } else {
+          _stopConfirmationPolling();
+        }
+      },
+    );
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: Center(
@@ -287,7 +348,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Please open your email client, click the confirmation link, then return here.',
+                  'Open the link in your email, then come back here. Your browser may show a '
+                  '"localhost refused to connect" page - that is expected and your email IS confirmed. '
+                  'This screen signs you in automatically; you can also tap the button below.',
                   style: TextStyle(fontSize: 12, color: Color(0xFF334155)),
                 ),
               ),
@@ -657,8 +720,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               TextField(
                 controller: _inviteCodeController,
                 decoration: InputDecoration(
-                  labelText: '8-Digit Invite Code (e.g. SPATIO-1)',
-                  hintText: 'SPATIO-1',
+                  labelText: 'Invite Code (e.g. SPATIO-7K9M-X4WP)',
+                  hintText: 'SPATIO-XXXX-XXXX',
+                  helperText: 'Sends a join request to the household admin',
                   prefixIcon: const Icon(Icons.vpn_key_outlined),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -669,8 +733,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             TextField(
               controller: _inviteCodeController,
               decoration: InputDecoration(
-                labelText: 'Enter Parent\'s Invite Code (e.g. SPATIO-1)',
-                hintText: 'SPATIO-1',
+                labelText: 'Parent\'s Invite Code (e.g. SPATIO-7K9M-X4WP)',
+                hintText: 'SPATIO-XXXX-XXXX',
+                helperText: 'Sends a join request to your parents for approval',
                 prefixIcon: const Icon(Icons.vpn_key_outlined),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

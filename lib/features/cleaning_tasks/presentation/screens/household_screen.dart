@@ -31,7 +31,10 @@ class _HouseholdScreenState extends ConsumerState<HouseholdScreen> {
       });
     }
 
-    final displayMembers = members.isNotEmpty ? members : [currentMember];
+    final activeMembers = (members.isNotEmpty ? members : [currentMember])
+        .where((m) => m.isActive)
+        .toList();
+    final pendingMembers = members.where((m) => m.isPending).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -78,12 +81,15 @@ class _HouseholdScreenState extends ConsumerState<HouseholdScreen> {
                               color: _activeSection == 0 ? const Color(0xFF00897B) : const Color(0xFF64748B),
                             ),
                             const SizedBox(width: 8),
-                            Text(
-                              'Family & Members',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: _activeSection == 0 ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                            Flexible(
+                              child: Text(
+                                'Family & Members',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: _activeSection == 0 ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                                ),
                               ),
                             ),
                           ],
@@ -115,12 +121,15 @@ class _HouseholdScreenState extends ConsumerState<HouseholdScreen> {
                           children: [
                             const Text('🎁', style: TextStyle(fontSize: 15)),
                             const SizedBox(width: 8),
-                            Text(
-                              'Rewards Store (${currentMember.points} pts)',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: _activeSection == 1 ? const Color(0xFFB45309) : const Color(0xFF64748B),
+                            Flexible(
+                              child: Text(
+                                'Rewards Store (${currentMember.points} pts)',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                  color: _activeSection == 1 ? const Color(0xFFB45309) : const Color(0xFF64748B),
+                                ),
                               ),
                             ),
                           ],
@@ -158,9 +167,12 @@ class _HouseholdScreenState extends ConsumerState<HouseholdScreen> {
                       children: [
                         Row(
                           children: [
-                            Text(
-                              currentMember.name,
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            Flexible(
+                              child: Text(
+                                currentMember.name,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
                             ),
                             const SizedBox(width: 6),
                             Container(
@@ -219,45 +231,52 @@ class _HouseholdScreenState extends ConsumerState<HouseholdScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.home_work_rounded, color: Colors.white, size: 28),
                             ),
-                            child: const Icon(Icons.home_work_rounded, color: Colors.white, size: 28),
-                          ),
-                          const SizedBox(width: 14),
-                          const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Family Home',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    authState.householdName ?? 'Family Home',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const Text(
+                                    'Multi-device Sync Active',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(fontSize: 12, color: Colors.white70),
+                                  ),
+                                ],
                               ),
-                              Text(
-                                'Multi-device Sync Active',
-                                style: TextStyle(fontSize: 12, color: Colors.white70),
-                              ),
-                            ],
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
+                      const SizedBox(width: 8),
+                      IconButton.filled(
+                        style: IconButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: const Color(0xFF00695C),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         ),
-                        icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
-                        label: const Text(AppStrings.inviteMember),
+                        tooltip: AppStrings.inviteMember,
+                        icon: const Icon(Icons.person_add_alt_1_rounded, size: 20),
                         onPressed: () => _showInviteDialog(context, inviteCode),
                       ),
                     ],
@@ -269,9 +288,12 @@ class _HouseholdScreenState extends ConsumerState<HouseholdScreen> {
                     children: [
                       const Icon(Icons.vpn_key_rounded, size: 16, color: Colors.white70),
                       const SizedBox(width: 6),
-                      Text(
-                        'Invite Code: $inviteCode',
-                        style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                      Flexible(
+                        child: Text(
+                          'Invite Code: $inviteCode',
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                        ),
                       ),
                       const Spacer(),
                       InkWell(
@@ -291,6 +313,175 @@ class _HouseholdScreenState extends ConsumerState<HouseholdScreen> {
             ),
             const SizedBox(height: 24),
 
+            // Pending Join Requests Queue (Visible only to Parents/Admins)
+            if (currentMember.isParent && pendingMembers.isNotEmpty) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 24),
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFBEB),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFFCD34D), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.person_add_alt_1_rounded,
+                            color: Color(0xFFD97706),
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Pending Join Requests (${pendingMembers.length})',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                  color: Color(0xFF92400E),
+                                ),
+                              ),
+                              const Text(
+                                'These users entered your invite code and need admin approval to join.',
+                                style: TextStyle(fontSize: 11, color: Color(0xFFB45309)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    ...pendingMembers.map((m) {
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFFDE68A)),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 20,
+                              backgroundColor: m.isParent ? const Color(0xFFE0F2F1) : const Color(0xFFFFF8E1),
+                              child: Text(m.avatar, style: const TextStyle(fontSize: 18)),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          m.name,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                        decoration: BoxDecoration(
+                                          color: m.isParent
+                                              ? const Color(0xFF00897B).withValues(alpha: 0.1)
+                                              : Colors.purple.shade50,
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Text(
+                                          m.isParent ? AppStrings.roleParent : AppStrings.roleChild,
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.bold,
+                                            color: m.isParent ? const Color(0xFF00695C) : Colors.purple.shade700,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    m.email,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            // Action buttons
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.red.shade700,
+                                    side: BorderSide(color: Colors.red.shade200),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    minimumSize: Size.zero,
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  onPressed: () async {
+                                    await ref.read(authProvider.notifier).rejectJoinRequest(m.id);
+                                    if (context.mounted) {
+                                      showTopSnackBar(context, 'Request declined for ${m.name}');
+                                    }
+                                  },
+                                  child: const Text('Decline', style: TextStyle(fontSize: 11)),
+                                ),
+                                const SizedBox(width: 6),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF00897B),
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                    minimumSize: Size.zero,
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                  onPressed: () async {
+                                    await ref.read(authProvider.notifier).approveJoinRequest(m.id);
+                                    if (context.mounted) {
+                                      showTopSnackBar(context, '✅ ${m.name} approved to join household!');
+                                    }
+                                  },
+                                  child: const Text('Approve', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              ),
+            ],
+
             // Section: Family Members
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -300,7 +491,7 @@ class _HouseholdScreenState extends ConsumerState<HouseholdScreen> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
                 ),
                 Text(
-                  '${members.length} members',
+                  '${activeMembers.length} members',
                   style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                 ),
               ],
@@ -308,7 +499,7 @@ class _HouseholdScreenState extends ConsumerState<HouseholdScreen> {
             const SizedBox(height: 12),
 
             // Members List
-            ...displayMembers.map((m) {
+            ...activeMembers.map((m) {
               final isParent = m.isParent;
               final isCurrent = m.id == currentMember.id;
               return Card(
@@ -340,9 +531,12 @@ class _HouseholdScreenState extends ConsumerState<HouseholdScreen> {
                           children: [
                             Row(
                               children: [
-                                Text(
-                                  m.name,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                Flexible(
+                                  child: Text(
+                                    m.name,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                  ),
                                 ),
                                 if (isCurrent) ...[
                                   const SizedBox(width: 6),
@@ -360,51 +554,60 @@ class _HouseholdScreenState extends ConsumerState<HouseholdScreen> {
                             const SizedBox(height: 2),
                             Text(
                               m.email,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                             ),
                           ],
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: isParent ? const Color(0xFFE0F2F1) : const Color(0xFFF3E8FF),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: isParent ? const Color(0xFF80CBC4) : const Color(0xFFD8B4FE),
-                          ),
-                        ),
-                        child: Text(
-                          isParent ? AppStrings.roleParent : AppStrings.roleChild,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: isParent ? const Color(0xFF00695C) : const Color(0xFF7E22CE),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.amber.shade50,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.amber.shade300),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.stars_rounded, size: 14, color: Color(0xFFD97706)),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${m.points} ${AppStrings.pointsSuffix}',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFFB45309),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isParent ? const Color(0xFFE0F2F1) : const Color(0xFFF3E8FF),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: isParent ? const Color(0xFF80CBC4) : const Color(0xFFD8B4FE),
                               ),
                             ),
-                          ],
-                        ),
+                            child: Text(
+                              isParent ? AppStrings.roleParent : AppStrings.roleChild,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: isParent ? const Color(0xFF00695C) : const Color(0xFF7E22CE),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.shade50,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.amber.shade300),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.stars_rounded, size: 14, color: Color(0xFFD97706)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${m.points} ${AppStrings.pointsSuffix}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFFB45309),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -431,9 +634,11 @@ class _HouseholdScreenState extends ConsumerState<HouseholdScreen> {
                       children: [
                         Icon(Icons.security_rounded, color: Theme.of(context).colorScheme.primary, size: 22),
                         const SizedBox(width: 8),
-                        const Text(
-                          'Role-Based Permissions & Multi-Device Access',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        const Expanded(
+                          child: Text(
+                            'Role-Based Permissions & Multi-Device Access',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
                         ),
                       ],
                     ),
@@ -542,9 +747,25 @@ class _HouseholdScreenState extends ConsumerState<HouseholdScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            Text(
-              'Family members can enter this code in their app on iOS, Android, or Web to join this household with instant live sync.',
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE0F2F1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.security_rounded, size: 16, color: Color(0xFF00695C)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Biztonsági jóváhagyás: a kód megadása után a belépő családtag kérelmet küld, amit itt, a Household fülön egy adminnak el kell fogadnia.',
+                      style: TextStyle(fontSize: 11, color: Colors.teal.shade900, height: 1.3),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),

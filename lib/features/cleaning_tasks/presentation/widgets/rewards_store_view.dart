@@ -294,53 +294,61 @@ class _RewardsStoreViewState extends ConsumerState<RewardsStoreView> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),
-                        ),
-                        child: const Icon(Icons.stars_rounded, color: Color(0xFFFBBF24), size: 28),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Spendable Points',
-                            style: TextStyle(fontSize: 12, color: Colors.white70),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF59E0B).withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),
                           ),
-                          Row(
+                          child: const Icon(Icons.stars_rounded, color: Color(0xFFFBBF24), size: 28),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                '$userPoints',
-                                style: const TextStyle(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.w900,
-                                  color: Color(0xFFFDE68A),
-                                ),
-                              ),
-                              const SizedBox(width: 6),
                               const Text(
-                                'pts',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white70,
-                                ),
+                                'Spendable Points',
+                                style: TextStyle(fontSize: 12, color: Colors.white70),
+                              ),
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      '$userPoints',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 26,
+                                        fontWeight: FontWeight.w900,
+                                        color: Color(0xFFFDE68A),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  const Text(
+                                    'pts',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   // Level Badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -354,7 +362,7 @@ class _RewardsStoreViewState extends ConsumerState<RewardsStoreView> {
                         Text(
                           'Lvl ${level.number}: ${level.title}',
                           style: const TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                           ),
@@ -398,8 +406,11 @@ class _RewardsStoreViewState extends ConsumerState<RewardsStoreView> {
 
         // 2. Parent Actions & Pending Approvals Queue
         if (isParent) ...[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
             children: [
               const Text(
                 'Rewards Administration',
@@ -555,7 +566,7 @@ class _RewardsStoreViewState extends ConsumerState<RewardsStoreView> {
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
               maxCrossAxisExtent: 320,
-              mainAxisExtent: 160,
+              mainAxisExtent: 175,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
             ),
@@ -668,6 +679,8 @@ class _RewardsStoreViewState extends ConsumerState<RewardsStoreView> {
                           onPressed: canAfford ? () => _handleRedeem(reward) : null,
                           child: Text(
                             canAfford ? 'Redeem for ${reward.cost} pts' : 'Need ${reward.cost - userPoints} more pts',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                           ),
                         ),
